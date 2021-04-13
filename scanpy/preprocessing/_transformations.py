@@ -26,6 +26,58 @@ def tfidf_transform(
     layer: Optional[str] = None,
     inplace: bool = True,
 ) -> Optional[Dict[str, np.ndarray]]:
+    """\
+    Transform counts to TF-IDF representation for scATAC data to perform LSA
+
+    Similar approach used in ArchR package [Granja21]
+
+    Params
+    ------
+    adata
+        The annotated data matrix of shape `n_obs` × `n_vars`.
+        Rows correspond to cells and columns to genes.
+    tfidf_method
+        `tf-logidf` (default) - adapted from [Cusanovich15], `logtf-logidf` -
+        alternative method with sublinear tf transform
+    norm
+        Vector norm. `l2` (default) uses Euclidean distance, `l1` uses absolute distance
+    layer
+        Layer to normalize instead of `X`. If `None`, `X` is normalized.
+    inplace
+        Whether to update `adata` or return dictionary with normalized copies of
+        `adata.X` and `adata.layers`.
+
+    Returns
+    -------
+    Returns dictionary with transformed copies of `adata.X` and `adata.layers`
+    or updates `adata` with transformed version of the original
+    `adata.X` and `adata.layers`, depending on `inplace`.
+
+    Example
+    --------
+    >>> from anndata import AnnData
+    >>> import scanpy as sc
+    >>> sc.settings.verbosity = 2
+    >>> np.set_printoptions(precision=2)
+    >>> adata = AnnData(np.array([
+    ...    [3, 3, 3, 6, 6],
+    ...    [1, 1, 1, 2, 2],
+    ...    [1, 22, 1, 2, 2],
+    ... ]))
+    >>> adata.X
+    array([[ 3.,  3.,  3.,  6.,  6.],
+           [ 1.,  1.,  1.,  2.,  2.],
+           [ 1., 22.,  1.,  2.,  2.]], dtype=float32)
+    >>> X_tfidf = sc.pp.tfidf_transform(adata, inplace=False)['X']
+    >>> X_tfidf
+
+    >>> X_tfidf = sc.pp.tfidf_transform(
+    ...     adata, tfidf_method='logtf-logidf', inplace=False
+    ... )['X']
+    Using an alternative transform method with sublinear term frequency:
+    >>> X_tfidf
+    """
+
     accepted_tfidf_methods = ['tf-logidf', 'logtf-logidf']
 
     if tfidf_method not in accepted_tfidf_methods:
