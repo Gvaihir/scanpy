@@ -1,18 +1,18 @@
 from collections.abc import MutableMapping
 from typing import Iterable, Union, Optional
 
-import pandas as pd
 import numpy as np
-from packaging import version
-from sklearn.utils import check_random_state
-from scipy.sparse import issparse
+import pandas as pd
 from anndata import AnnData
+from packaging import version
+from scipy.sparse import issparse
+from sklearn.utils import check_random_state
 
-from .. import settings
 from .. import logging as logg
-from ..neighbors import _rp_forest_generate
-from .._utils import NeighborsView
+from .. import settings
 from .._compat import pkg_version
+from .._utils import NeighborsView
+from ..neighbors.neighbors_utils import rp_forest_generate
 
 ANNDATA_MIN_VERSION = version.parse("0.7rc1")
 
@@ -343,7 +343,7 @@ class Ingest:
             self._search_graph = search_graph.maximum(search_graph.transpose())
 
             if 'rp_forest' in neighbors:
-                self._rp_forest = _rp_forest_generate(neighbors['rp_forest'])
+                self._rp_forest = rp_forest_generate(neighbors['rp_forest'])
             else:
                 self._rp_forest = None
         else:

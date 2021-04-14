@@ -7,8 +7,8 @@ from scipy.sparse.csgraph import minimum_spanning_tree
 
 from .. import _utils
 from .. import logging as logg
-from ..neighbors import Neighbors
 from .._compat import Literal
+from ..neighbors.Neighbors import Neighbors
 
 _AVAIL_MODELS = {'v1.0', 'v1.2'}
 

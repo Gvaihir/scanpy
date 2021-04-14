@@ -7,7 +7,8 @@ from anndata import AnnData
 from natsort import natsorted
 
 from .. import logging as logg
-from ..neighbors import Neighbors, OnFlySymMatrix
+from ..neighbors.Neighbors import Neighbors
+from ..neighbors.OnFlySymMatrix import OnFlySymMatrix
 
 
 def _diffmap(adata, n_comps=15, neighbors_key=None):
