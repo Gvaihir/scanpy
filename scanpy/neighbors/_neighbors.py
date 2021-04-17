@@ -93,7 +93,8 @@ def neighbors(
 
     Notes
     -----
-    If `method='umap'`, it's highly recommended to install pynndescent ``pip install pynndescent``.
+    If `method='umap'`, it's highly recommended to install pynndescent
+    ``pip install pynndescent``.
     Installing `pynndescent` can significantly increase performance,
     and in later versions it will become a hard dependency.
     """
@@ -101,6 +102,7 @@ def neighbors(
     adata = adata.copy() if copy else adata
     if adata.is_view:  # we shouldn't need this here...
         adata._init_as_actual(adata.copy())
+
     neighbors = Neighbors(adata)
     neighbors.compute_neighbors(
         n_neighbors=n_neighbors,

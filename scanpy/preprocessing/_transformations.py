@@ -3,9 +3,10 @@ from typing import Optional, Dict
 import numpy as np
 from anndata import AnnData
 from sklearn.feature_extraction.text import TfidfTransformer
+
+from scanpy.get import _get_obs_rep, _set_obs_rep
 from .. import logging as logg
 from .._utils import view_to_actual
-from scanpy.get import _get_obs_rep, _set_obs_rep
 
 
 def _tfidf_transform_inner(untransformed_x, norm, tfidf_method, inplace=False):
@@ -29,7 +30,7 @@ def tfidf_transform(
     """\
     Transform counts to TF-IDF representation for scATAC data to perform LSA
 
-    Similar approach used in ArchR package [Granja21]
+    Similar approach used in ArchR package [Granja21]_.
 
     Params
     ------
@@ -37,7 +38,7 @@ def tfidf_transform(
         The annotated data matrix of shape `n_obs` × `n_vars`.
         Rows correspond to cells and columns to genes.
     tfidf_method
-        `tf-logidf` (default) - adapted from [Cusanovich15], `logtf-logidf` -
+        `tf-logidf` (default) - adapted from [Cusanovich15]_, `logtf-logidf` -
         alternative method with sublinear tf transform
     norm
         Vector norm. `l2` (default) uses Euclidean distance, `l1` uses absolute distance

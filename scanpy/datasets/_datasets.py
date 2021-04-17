@@ -1,16 +1,16 @@
-from pathlib import Path
-from typing import Optional
 import warnings
+from pathlib import Path
+from typing import Optional, List
 
 import numpy as np
 import pandas as pd
 from anndata import AnnData
 
+from ._utils import check_datasetdir_exists
 from .. import logging as logg, _utils
 from .._compat import Literal
 from .._settings import settings
 from ..readwrite import read, read_visium
-from ._utils import check_datasetdir_exists
 
 HERE = Path(__file__).parent
 
@@ -243,6 +243,16 @@ def pbmc68k_reduced() -> AnnData:
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=FutureWarning, module="anndata")
         return read(filename)
+
+
+def pbmc_tea() -> List[AnnData]:
+    filename = [
+        HERE / x
+        for x in ['tea_adt_subset.h5', 'tea_atac_subset.h5', 'tea_rna_subset.h5']
+    ]
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=FutureWarning, module="anndata")
+        return [read(x) for x in filename]
 
 
 @check_datasetdir_exists
