@@ -9,3 +9,5 @@ from ._simple import filter_cells, filter_genes
 from ._simple import log1p, sqrt, scale, subsample
 from ._simple import normalize_per_cell, regress_out, downsample_counts
 from ._transformations import tfidf_transform
+from ..neighbors._neighbors import neighbors
+from ..neighbors._wknn import weighted_neighbors

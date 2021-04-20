@@ -31,6 +31,10 @@ _Method = method_type()
 _Metric = metric()
 
 
+class NeighborsError(Exception):
+    """Handles exceptions related to neighbors"""
+
+
 class Neighbors(object):
     """\
     Data represented as graph of nearest neighbors.
