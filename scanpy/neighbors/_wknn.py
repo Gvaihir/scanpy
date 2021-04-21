@@ -1,8 +1,9 @@
-from typing import Optional, List, Tuple, Callable, Any, Generator, Dict
+from typing import Optional, List, Tuple, Callable, Any, Iterable, Dict, Union
 import numpy as np
 import numba as nb
 from anndata import AnnData
-from scipy.sparse import issparse, find
+from scipy.sparse import issparse, find, csr_matrix
+from itertools import product
 
 from .neighbors_config import method_type, metric, metric_fn
 from .._utils import _doc_params, NeighborsView
@@ -55,7 +56,7 @@ def calculate_neighborhood_weights(
     adata_collection: List[AnnData],
     joint: bool = False,
     key_added: Optional[str] = None,
-) -> Generator[Tuple[float, ...]]:
+) -> Iterable[Tuple[float, ...]]:
     """\
     Computes weights for every modality for each cell.
 
@@ -67,55 +68,43 @@ def calculate_neighborhood_weights(
     Generator of tuples with weights for each modality in the order of adata_collection
     argument
     """
-    pass
+    # TODO need L2Normalization?
+    if joint:
+        pass
 
 
-def within_modality_impute(
-    pcs: np.array, neighbors: np.array
-) -> Generator[Tuple[float, ...]]:
-    for idx, this_cell_neighbors in enumerate(neighbors):
-        closest_neighbors_indexes = find_neighbors_index(
-            cell_neighbors=this_cell_neighbors,
-            filter_func=generic_filter,
-            statement='>0',
-        )
-        neighbors_pcs = pcs[idx][closest_neighbors_indexes]
-        yield np.mean(neighbors_pcs, axis=1)
+# For now creating a common method - will see if it results in an overhead
+def impute_cell_via_neighbors(
+    this_pcs_hash: Dict, cross_cell_neighbors: Union[np.array, csr_matrix]
+) -> np.ndarray:
+    closest_neighbors_indexes, _ = find_neighbors(
+        cell_neighbors=cross_cell_neighbors,
+        filter_func=generic_filter,
+        statement='>0',
+    )
+    this_neighbors_barcodes = list(this_pcs_hash.keys())[closest_neighbors_indexes]
+    cross_neighbors_pcs = [this_pcs_hash.get(x, -1) for x in this_neighbors_barcodes]
+    if any([x == -1 for x in cross_neighbors_pcs]):
+        raise NeighborsError(
+            "cross_modality_impute(): some cell barcodes are not found in "
+            "other assays"
+        )  # TODO barcodes to the error
+    return np.mean(cross_neighbors_pcs, axis=1)
 
 
-def cross_modality_impute(
-    neighbors: np.array, this_barcodes: List, cross_hash_pcs: Dict
-) -> Generator[Tuple[float, ...]]:
-    for idx, this_cell_neighbors in enumerate(neighbors):
-        closest_neighbors_indexes = find_neighbors_index(
-            cell_neighbors=this_cell_neighbors,
-            filter_func=generic_filter,
-            statement='>0',
-        )
-        this_neighbors_barcodes = this_barcodes[closest_neighbors_indexes]
-        cross_neighbors_pcs = [
-            cross_hash_pcs.get(x, -1) for x in this_neighbors_barcodes
-        ]
-        if any([x == -1 for x in cross_neighbors_pcs]):
-            raise NeighborsError(
-                "cross_modality_impute(): some cell barcodes are not "
-                "found in other assays"
-            )  # TODO barcodes to the error
-        yield np.mean(cross_neighbors_pcs, axis=1)
-
-
-def find_neighbors_index(cell_neighbors, filter_func, **kwargs):
+def find_neighbors(cell_neighbors, filter_func, **kwargs):
     if issparse(cell_neighbors):
-        closest_neighbors_indexes = find(cell_neighbors)[1]
+        closest_neighbors = zip(find(cell_neighbors)[1], find(cell_neighbors)[2])
     else:
-        closest_neighbors_indexes = filter_large_array(
-            cell_neighbors, filter_func, **kwargs
-        )
-    return closest_neighbors_indexes
+        closest_neighbors = filter_large_array(cell_neighbors, filter_func, **kwargs)
+    closest_neighbors = sorted(closest_neighbors, key=lambda x: x[1])
+    return list(zip(*closest_neighbors))
 
 
-def hash_pcs(barcodes: List[str], pcs: np.array) -> Dict:
-    out = {bc: pcs[idx] for idx, bc in enumerate(barcodes)}
+def barcodes_features_hash(
+    barcodes: List[str], features: Union[np.array, csr_matrix]
+) -> Dict:
+    out = {bc: features[idx] for idx, bc in enumerate(barcodes)}
     return out
 
 
@@ -125,6 +114,13 @@ def knn_computed(adata: AnnData) -> bool:
         return True
     except KeyError:
         return False
+
+
+def modality_product(adata_collection: List[AnnData]) -> List[Tuple[Any, ...]]:
+    cross_modalities = list(
+        product(range(len(adata_collection)), range(len(adata_collection)))
+    )
+    return cross_modalities
 
 
 @nb.jit
@@ -139,7 +135,7 @@ def filter_large_array(
     counter = 0
     for idx, element in enumerate(input_array):
         if filter_func(element, **kwargs):
-            result[counter] = idx
+            result[counter] = idx, element
             counter += 1
     return result
 
